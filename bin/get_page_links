@@ -13,11 +13,11 @@ OptionParser.new do |opt|
   opt.on('-e',                '--execute')                {|v| OPTIONS[:execute]        = v}
 end
 
-raise OptionParser::MissingArgument if !(OPTIONS[:all] || OPTIONS[:target_top_url])
+#raise OptionParser::MissingArgument if !(OPTIONS[:all] || OPTIONS[:target_top_url])
 
 logger = logger.new(OPTIONS[:logfile] || STDOUT)
 
 # target_web_siteからトップページを読み込んですべてのlinkをtarget_linkに保存
 if OPTIONS[:all]
-  TargetWebSite.all.url.to_a.map {|site| site}
+  p TargetWebSite.all.url.to_a.map {|site| site}
 end
