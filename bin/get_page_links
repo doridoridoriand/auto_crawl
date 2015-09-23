@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
 
 $: << File.expand_path(File.join(__FILE__, '..', '..', 'lib'))
-require 'optparse'
-require 'logger'
 require 'auto_crawl'
+
+include Base
+include TargetLinkModule
 
 OPTIONS = {}
 OptionParser.new do |opt|
@@ -11,13 +12,46 @@ OptionParser.new do |opt|
   opt.on('-t target_top_url', '--target_top_url', String) {|v| OPTIONS[:target_top_url] = v}
   opt.on('-l logfile',        '--logfile',        String) {|v| OPTIONS[:logfile]        = v}
   opt.on('-e',                '--execute')                {|v| OPTIONS[:execute]        = v}
+  opt.parse!(ARGV)
 end
 
-#raise OptionParser::MissingArgument if !(OPTIONS[:all] || OPTIONS[:target_top_url])
+raise OptionParser::MissingArgument if !(OPTIONS[:all] || OPTIONS[:target_top_url])
 
-logger = logger.new(OPTIONS[:logfile] || STDOUT)
+logger = Logger.new(OPTIONS[:logfile] || STDOUT)
 
 # target_web_siteからトップページを読み込んですべてのlinkをtarget_linkに保存
+# 大変に雑な条件分岐。試験用なので最低限の機能のみ
 if OPTIONS[:all]
-  p TargetWebSite.all.url.to_a.map {|site| site}
+  all_sites = TargetWebSite.all.map {|site| site.url}.to_a
+  all_sites.each do |site|
+    # DBにデーターが一件も無かった場合
+    begin
+      get_all_links(site).remove_needlsee_links.each_with_index do |link, counter|
+        if OPTIONS[:execute]
+          link.save_items(site, counter)
+        end
+      end
+    rescue => error
+      raise "FuckinShitError (#{error})"
+    end
+    #  end
+
+    #  all_sites.each do |site|
+    # DBにデーターがあった場合。かつ重複パースはしない予定試験的なので一旦パースしたら更新もしない
+    already_exists = TargetLink.all.map {|data| data.top_url}.to_a.uniq! if TargetLink
+    begin
+      already_exists.each do |already_exists_url|
+        if site == already_exists_url
+          last_id = TargetLink.last.id
+          get_all_links(site).remove_needlsee_links.each_with_index do |link, counter|
+            if OPTIONS[:execute]
+              link.save_items(site, counter + last_id + 1)
+            end
+          end
+        end
+      end
+    rescue => error
+      raise "FuckinShitError (#{error})"
+    end
+  end
 end

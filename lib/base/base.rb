@@ -1,10 +1,3 @@
-#$: << File.expand_path(File.join(__File__, '..', 'auto_crawl'))
-#autoload(:NoJsCrawl,     'no_js')
-#autoload(:DecodeJsCrawl, 'decode_js')
-
-#class Base
-#end
-
 require 'nokogiri'
 require 'nokogumbo'
 require 'open-uri'
@@ -18,10 +11,25 @@ module Base
   end
 
   # @return Array
+  # 重複したリンクは排除(短縮URLサービスとか使っていたりすると不可能)
   def get_all_links(url)
     agent = Mechanize.new
     agent.user_agent_alias = 'Mac Safari'
     source = agent.get(url)
-    source.links.map {|element| element.href}.to_a
+    source.links.map {|element| element.href}.to_a.uniq!
+  end
+
+  # mailtoなどもリンクに入ってしまっているので、これを除外する
+  def remove_needlsee_links
+    arr = []
+    needless = %w(mailto javascript)
+    self.each do |link|
+      needless.each do |mess|
+        unless link.include?(mess)
+          arr.push(link)
+        end
+      end
+    end
+    arr
   end
 end

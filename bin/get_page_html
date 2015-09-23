@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path(File.join(__FILE__, '..', '..', 'lib'))
+require 'auto_crawl'
+
+include Base
+include NoJsCrawl
+include CrawledOriginPageModule
+
+OPTIONS = {}
+OptionParser.new do |opt|
+  opt.on('-a',           '--all')                {|v| OPTIONS[:all]       = v}
+  # パースしたいHTMLのアドレスを入れる
+  opt.on('-t test_page', '--test_page', String) {|v| OPTIONS[:test_page] = v}
+  opt.on('-l logfile',   '--logifle',   String) {|v| OPTIONS[:logifle]   = v}
+  opt.on('-e',           '--execute')           {|v| OPTIONS[:execute]   = v}
+  opt.parse!(ARGV)
+end
+
+raise OptionParser::MissingArgument if !(OPTIONS[:all] || OPTIONS[:test_page])
+
+logger = Logger.new(OPTIONS[:logfile] || STDOUT)
+
+all_pages = TargetLink.all
+hash = Hash.new {|h, e| h[e] = {}}
+
+all_pages.each_with_index do |data, i|
+  hash[i][:top_url] = data.top_url
+  hash[i][:absolute_url] = data.absolute_url
+  hash[i][:page_type] = data.page_type
+end
+
+if OPTIONS[:all]
+  hash.each do |hshs|
+    begin
+      hshs[1][:absolute_url].html_source.save_to_db(hshs[0],
+                                                    hshs[1][:top_url],
+                                                    hshs[1][:absolute_url],
+                                                    'UNKO')
+      logger.info("#{hshs[1][:absolute_url]} crawled")
+    rescue => error
+      logger.info(error)
+    end
+  end
+end
