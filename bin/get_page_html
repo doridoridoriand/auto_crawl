@@ -39,7 +39,7 @@ if OPTIONS[:all]
                                                     'UNKO')
       logger.info("#{hshs[1][:absolute_url]} crawled")
     rescue => error
-      logger.info(error)
+      logger.error(error)
     end
   end
 end

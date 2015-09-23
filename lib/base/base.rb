@@ -30,6 +30,6 @@ module Base
         end
       end
     end
-    arr
+    arr.uniq!
   end
 end

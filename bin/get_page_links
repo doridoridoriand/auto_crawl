@@ -27,8 +27,9 @@ if OPTIONS[:all]
     # DBにデーターが一件も無かった場合
     begin
       get_all_links(site).remove_needlsee_links.each_with_index do |link, counter|
+        TargetLink.last ? last_id = TargetLink.last.id + 1 : last_id = 0
         if OPTIONS[:execute]
-          link.save_items(site, counter)
+          link.save_items(site, counter + last_id)
         end
       end
     rescue => error
