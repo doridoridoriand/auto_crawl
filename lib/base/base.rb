@@ -1,6 +1,7 @@
 require 'nokogiri'
 require 'nokogumbo'
 require 'open-uri'
+require 'natto'
 
 # JSデコードの有無にかかわらず共通して使いそうなメソッドをひとまずBaseに定義
 module Base
@@ -31,5 +32,24 @@ module Base
       end
     end
     arr.uniq!
+  end
+
+  def text_all
+    begin
+      source = Nokogiri::HTML5 self
+      source.search('text()').map{|data| data.text.gsub(/(\s)/,"")}.to_s
+    rescue => error
+      error
+      raise 'FuckinShitError'
+    end
+  end
+
+  def japanese_only
+    self.gsub(/\w+/, '').gsub(/\\|<|>|(|)|;|:/, '').gsub('&#', '').gsub(/\//, '').gsub(/("")/, '').gsub(/;/, '').gsub(/=/, '')
+  end
+
+  def morp
+    nebaneba = Natto::MeCab.new
+    nebaneba.parse(self)
   end
 end

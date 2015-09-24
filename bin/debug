@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path(File.join(__FILE__, '..', '..', 'lib'))
+require 'auto_crawl'
+require 'kconv'
+require 'sanitize'
+require 'parallel'
+
+include Base
+
+#sample_data = CrawledOriginPage.first
+#puts Sanitize.clean(sample_data.html.chomp)
+
+all_entry = CrawledOriginPage.all.to_a
+
+data = Parallel.map(all_entry, :in_processes=>8) {|data| Sanitize.clean(data.html.chomp).text_all.japanese_only}
+data.map {|entry| puts Sanitize.clean(entry.chomp).morp}
